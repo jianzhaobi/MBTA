@@ -117,6 +117,7 @@ def server(input, output, session):
     @reactive.Effect
     @reactive.event(input.route)
     def _():
+        mbta_lst.set(getMBTA(input.route()))
         mbta_df, mbta_h, mbta_e = mbta_lst.get()
         latmean = mbta_df["Lat"].mean()
         lonmean = mbta_df["Lon"].mean()
