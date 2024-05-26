@@ -10,6 +10,8 @@ from shiny import *
 from shinywidgets import *
 from datetime import datetime
 
+# Route Data
+# https://mbta-massdot.opendata.arcgis.com/maps/MassDOT::mbta-systemwide-gtfs-map/about
 
 def getMBTA(route):
 
@@ -64,12 +66,12 @@ def getMBTA(route):
 
 # Define UI
 app_ui = ui.page_fluid(
-    ui.panel_title("MBTA Real-Time"),
+    ui.panel_title("MBTA Real-Time Map"),
     ui.tags.h5("By Jianzhao Bi"),
     ui.input_select(id="route", label=None, choices=[
         'Green-B', 'Green-C', 'Green-D', 'Green-E', 'Red', 'Orange', 'Blue',
         '1', '57', '60', '64', '66', '88', '90'
-    ], selected='Green-B'),
+    ], selected="Green-B"),
     ui.output_text("nowtime"),
     output_widget("routemap"),
 )
@@ -87,11 +89,11 @@ def server(input, output, session):
                 touch_zoom=True,
                 zoom_control=False,
                 zoom_snap=0.5, # Forces the map’s zoom level to always be a multiple of this.
-                zoom_delta=0.5, # Controls how much the map’s zoom level will change after pressing + or - on the keyboard, or using the zoom controls.
+                zoom_delta=1, # Controls how much the map’s zoom level will change after pressing + or - on the keyboard, or using the zoom controls.
                 box_zoom=False, # Whether the map can be zoomed to a rectangular area specified by dragging the mouse while pressing the shift key
             )
     route_map.add(ipyl.ZoomControl(position="bottomright"))
-    route_map.layout.height = '550px'
+    route_map.layout.height = "550px"
     register_widget("routemap", route_map)
 
     # Update automatically
@@ -130,7 +132,7 @@ def server(input, output, session):
     @render.text
     def nowtime():
         mbta_df, mbta_h, mbta_e = mbta_lst.get()
-        return str(input.route()) + ": " + str(datetime.fromtimestamp(mbta_h["timestamp"]))
+        return str(input.route()) + " " + str(datetime.fromtimestamp(mbta_h["timestamp"]))
 
 app = App(app_ui, server)
 
