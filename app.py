@@ -102,20 +102,21 @@ def server(input, output, session):
         mbta_lst.set(getMBTA(input.route()))
         mbta_df, mbta_h, mbta_e = mbta_lst.get()
         route_map.layers = [layer for layer in route_map.layers if isinstance(layer, ipyl.TileLayer)]  # clear layers
-        for i in range(len(mbta_df)):
-            marker = ipyl.CircleMarker(
-                location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
-                radius=10,
-                color="blue" if mbta_df["Direction"].iloc[i] == 1 else "green",
-                opacity=0.5,
-                draggable=False,
-            )
-            # marker.popup = ipyl.Popup(
-            #     location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
-            #     child=widgets.HTML(f"ID: {mbta_df['ID'].iloc[i]}<br/>Cars: {mbta_df['Carriage'].iloc[i]}<br/>"),
-            #     close_button=False
-            # )
-            route_map.add(marker)
+        if len(mbta_df) != 0:
+            for i in range(len(mbta_df)):
+                marker = ipyl.CircleMarker(
+                    location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
+                    radius=10,
+                    color="blue" if mbta_df["Direction"].iloc[i] == 1 else "green",
+                    opacity=0.5,
+                    draggable=False,
+                )
+                # marker.popup = ipyl.Popup(
+                #     location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
+                #     child=widgets.HTML(f"ID: {mbta_df['ID'].iloc[i]}<br/>Cars: {mbta_df['Carriage'].iloc[i]}<br/>"),
+                #     close_button=False
+                # )
+                route_map.add(marker)
         reactive.invalidate_later(5)
 
     @reactive.Effect
@@ -123,16 +124,21 @@ def server(input, output, session):
     def _():
         mbta_lst.set(getMBTA(input.route()))
         mbta_df, mbta_h, mbta_e = mbta_lst.get()
-        latmean = mbta_df["Lat"].mean()
-        lonmean = mbta_df["Lon"].mean()
-        route_map.center = (latmean, lonmean)
-        route_map.zoom = 12
+        if len(mbta_df) != 0:
+            latmean = mbta_df["Lat"].mean()
+            lonmean = mbta_df["Lon"].mean()
+            route_map.center = (latmean, lonmean)
+            route_map.zoom = 12
 
     @output
     @render.text
     def nowtime():
         mbta_df, mbta_h, mbta_e = mbta_lst.get()
-        return str(input.route()) + " " + str(datetime.fromtimestamp(mbta_h["timestamp"]))
+        if len(mbta_df) != 0:
+            txt = str(input.route()) + " " + str(datetime.fromtimestamp(mbta_h["timestamp"]))
+        else:
+            txt = f"{input.route()} is not operating"
+        return txt
 
 app = App(app_ui, server)
 
