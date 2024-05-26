@@ -85,11 +85,13 @@ def server(input, output, session):
                 close_popup_on_click=False,
                 scroll_wheel_zoom=True,
                 touch_zoom=True,
+                zoom_control=False,
                 zoom_snap=0.5, # Forces the map’s zoom level to always be a multiple of this.
                 zoom_delta=0.5, # Controls how much the map’s zoom level will change after pressing + or - on the keyboard, or using the zoom controls.
                 box_zoom=False, # Whether the map can be zoomed to a rectangular area specified by dragging the mouse while pressing the shift key
             )
-    route_map.layout.height = '600px'
+    route_map.add(ipyl.ZoomControl(position="bottomright"))
+    route_map.layout.height = '550px'
     register_widget("routemap", route_map)
 
     # Update automatically
