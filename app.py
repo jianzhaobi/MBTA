@@ -103,8 +103,24 @@ def server(input, output, session):
     register_widget("routemap", route_map)
 
     # Route GeoJSON files
-    bus_route = gpd.read_file("https://jianzhaobi.github.io/data/Bus_Routes.geojson")
-    transit_route = gpd.read_file("https://jianzhaobi.github.io/data/Transit_Routes.geojson")
+    bus_url = "https://jianzhaobi.github.io/data/Bus_Routes.geojson"
+    if "pyodide" in sys.modules:
+        import pyodide.http
+        with pyodide.http.open_url(bus_url) as f:
+            bus_dat = f.getvalue()
+    else:
+        response = urllib.request.urlopen(bus_url)
+        bus_dat = response.read().decode("utf-8")
+    bus_route = gpd.read_file(bus_dat)
+    transite_url = "https://jianzhaobi.github.io/data/Transit_Routes.geojson"
+    if "pyodide" in sys.modules:
+        import pyodide.http
+        with pyodide.http.open_url(transite_url) as f:
+            transit_dat = f.getvalue()
+    else:
+        response = urllib.request.urlopen(transite_url)
+        transit_dat = response.read().decode("utf-8")
+    transit_route = gpd.read_file(transit_dat)
     route_shp = pd.concat([bus_route, transit_route])
 
     # Update automatically
