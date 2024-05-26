@@ -13,6 +13,10 @@ from datetime import datetime
 # Route Data
 # https://mbta-massdot.opendata.arcgis.com/maps/MassDOT::mbta-systemwide-gtfs-map/about
 
+# Shinylive
+# shinylive export mbtapy site
+# python3 -m http.server --directory site --bind localhost 8008
+
 def getMBTA(route):
 
     # MBTA JSON file
