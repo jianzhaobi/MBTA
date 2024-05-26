@@ -1,4 +1,5 @@
 import pandas as pd
+import geopandas as gpd
 import json
 import urllib
 import sys
@@ -17,8 +18,7 @@ from datetime import datetime
 # shinylive export mbtapy site
 # python3 -m http.server --directory site --bind localhost 8008
 
-def getMBTA(route):
-
+def getMBTA(route, route_shp):
     # MBTA JSON file
     # https://shinylive.io/py/examples/#fetch-data-from-a-web-api
     url = "https://mbta-flask-513a6449725e.herokuapp.com/proxy"
@@ -63,8 +63,10 @@ def getMBTA(route):
 
     # Route
     rdf = jdf[jdf["Route"] == route]
+    sdf = route_shp[route_shp["route_id"] == route]
+    sdf = sdf[['OBJECTID', 'geometry']]
 
-    return rdf, jdat_header, jdat_entity
+    return rdf, sdf, jdat_header, jdat_entity
 
 # ------------------- #
 
@@ -100,14 +102,25 @@ def server(input, output, session):
     route_map.layout.height = "550px"
     register_widget("routemap", route_map)
 
+    # Route GeoJSON files
+    bus_route = gpd.read_file(r"data/Bus_Routes.geojson")
+    transit_route = gpd.read_file(r"data/Transit_Routes.geojson")
+    route_shp = pd.concat([bus_route, transit_route])
+
     # Update automatically
     @reactive.Effect
     def _():
-        mbta_lst.set(getMBTA(input.route()))
-        mbta_df, mbta_h, mbta_e = mbta_lst.get()
+        mbta_lst.set(getMBTA(input.route(), route_shp))
+        mbta_df, mbta_shp, mbta_h, mbta_e = mbta_lst.get()
         route_map.layers = [layer for layer in route_map.layers if isinstance(layer, ipyl.TileLayer)]  # clear layers
+        # Route
+        geodata = ipyl.GeoData(geo_dataframe=mbta_shp,
+                               style={'color': 'orange', 'fillColor': 'orange', 'opacity': 0.1, 'weight': 4,
+                                      'dashArray': '2', 'fillOpacity': 0.1})
+        route_map.add(geodata)
         if len(mbta_df) != 0:
             for i in range(len(mbta_df)):
+                # Trains
                 marker = ipyl.CircleMarker(
                     location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
                     radius=10,
@@ -126,8 +139,8 @@ def server(input, output, session):
     @reactive.Effect
     @reactive.event(input.route)
     def _():
-        mbta_lst.set(getMBTA(input.route()))
-        mbta_df, mbta_h, mbta_e = mbta_lst.get()
+        mbta_lst.set(getMBTA(input.route(), route_shp))
+        mbta_df, mbta_shp, mbta_h, mbta_e = mbta_lst.get()
         if len(mbta_df) != 0:
             latmean = mbta_df["Lat"].mean()
             lonmean = mbta_df["Lon"].mean()
@@ -137,7 +150,7 @@ def server(input, output, session):
     @output
     @render.text
     def nowtime():
-        mbta_df, mbta_h, mbta_e = mbta_lst.get()
+        mbta_df, mbta_shp, mbta_h, mbta_e = mbta_lst.get()
         if len(mbta_df) != 0:
             txt = str(input.route()) + " " + str(datetime.fromtimestamp(mbta_h["timestamp"]))
         else:
