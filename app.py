@@ -103,8 +103,8 @@ def server(input, output, session):
     register_widget("routemap", route_map)
 
     # Route GeoJSON files
-    bus_route = gpd.read_file(r"data/Bus_Routes.geojson")
-    transit_route = gpd.read_file(r"data/Transit_Routes.geojson")
+    bus_route = gpd.read_file("https://jianzhaobi.github.io/data/Bus_Routes.geojson")
+    transit_route = gpd.read_file("https://jianzhaobi.github.io/data/Transit_Routes.geojson")
     route_shp = pd.concat([bus_route, transit_route])
 
     # Update automatically
@@ -159,4 +159,4 @@ def server(input, output, session):
 
 app = App(app_ui, server)
 
-# run_app(app)
+run_app(app)
