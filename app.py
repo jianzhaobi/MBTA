@@ -1,4 +1,4 @@
-import io
+from io import StringIO
 
 import pandas as pd
 import geopandas as gpd
@@ -81,6 +81,7 @@ app_ui = ui.page_fluid(
         '1', '57', '60', '64', '66', '88', '90'
     ], selected="Green-B"),
     ui.output_text("nowtime"),
+    ui.output_text("onclick"),
     output_widget("routemap"),
 )
 
@@ -136,17 +137,51 @@ def server(input, output, session):
         route_url = "data/outputs/routes.geojson"
         route_shp = gpd.read_file(route_url)
 
+    # # Direction
+    # dirct_url = "https://jianzhaobi.github.io/data/directions.txt"
+    # if "pyodide" in sys.modules:
+    #     import pyodide.http
+    #     with pyodide.http.open_url(dirct_url) as f:
+    #         dirct_dat = f.getvalue()
+    #         dirct_df = pd.read_csv(dirct_dat)
+    # else:
+    #     # response = urllib.request.urlopen(route_url)
+    #     # route_dat = response.read().decode("utf-8")
+    #     dirct_url = "data/outputs/directions.txt"
+    #     dirct_df = pd.read_csv(dirct_url)
+    # dirct_df = dirct_df.rename(columns={
+    #     'route_id': 'Route',
+    #     'direction_id': 'Direction',
+    # })
+
+    # Trip
+    trip_url = "https://jianzhaobi.github.io/data/trip_compressed.txt"
+    if "pyodide" in sys.modules:
+        import pyodide.http
+        with pyodide.http.open_url(trip_url) as f:
+            trip_dat = f.getvalue()
+            trip_df = pd.read_csv(StringIO(trip_dat))
+    else:
+        # response = urllib.request.urlopen(route_url)
+        # route_dat = response.read().decode("utf-8")
+        trip_url = "data/outputs/trip_compressed.txt"
+        trip_df = pd.read_csv(trip_url)
 
     # Update automatically
     @reactive.Effect
     def _():
+        # MBTA real-time
         mbta_lst.set(getMBTA(input.route(), route_shp))
         mbta_df, mbta_shp, mbta_h, mbta_e = mbta_lst.get()
+        # Direction
+        # mbta_df = mbta_df.merge(dirct_df, on=['Route', 'Direction'])
+        mbta_df = mbta_df.merge(trip_df, on=['Trip'])
+        # Clear markers
         route_map.layers = [layer for layer in route_map.layers if isinstance(layer, ipyl.TileLayer)]  # clear layers
         # Route
         geodata = ipyl.GeoData(geo_dataframe=mbta_shp,
-                               style={'color': 'orange', 'fillColor': 'orange', 'opacity': 0.1, 'weight': 4,
-                                      'dashArray': '2', 'fillOpacity': 0.1})
+                               style={'color': 'orange', 'fillColor': 'orange', 'opacity': 0.2, 'weight': 4,
+                                      'dashArray': '2', 'fillOpacity': 0.2})
         route_map.add(geodata)
         if len(mbta_df) != 0:
             for i in range(len(mbta_df)):
@@ -158,11 +193,11 @@ def server(input, output, session):
                     opacity=0.5,
                     draggable=False,
                 )
-                # marker.popup = ipyl.Popup(
-                #     location=(mbta_df["Lat"].iloc[i], mbta_df["Lon"].iloc[i]),
-                #     child=widgets.HTML(f"ID: {mbta_df['ID'].iloc[i]}<br/>Cars: {mbta_df['Carriage'].iloc[i]}<br/>"),
-                #     close_button=False
-                # )
+                items = [widgets.Button(description=f"{mbta_df['ID'].iloc[i]}"),
+                         widgets.Button(description=f"Cars: {mbta_df['Carriage'].iloc[i]}"),
+                         widgets.Button(description=f"To {mbta_df['Headsign'].iloc[i]}"),
+                         widgets.Button(description=f"{mbta_df['Status'].iloc[i]}")]
+                marker.popup = widgets.VBox(items)
                 route_map.add(marker)
         reactive.invalidate_later(5)
 

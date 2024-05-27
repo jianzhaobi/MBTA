@@ -19,4 +19,14 @@ route_shp_sim.to_file("data/outputs/routes.geojson", driver="GeoJSON")
 #     pickle.dump(route_shp, f)
 
 
+# --------- #
+# Trip
+trip_df = pd.read_csv("data/inputs/trips.txt")
+print(trip_df.columns)
+trip_df = trip_df[["trip_id", "trip_headsign"]]
+trip_df = trip_df.rename(columns={
+    "trip_id": "Trip",
+    "trip_headsign": "Headsign"
+})
+trip_df.to_csv("data/outputs/trip_compressed.txt", index=False)
 
