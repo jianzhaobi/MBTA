@@ -142,10 +142,8 @@ def server(input, output, session):
         import pyodide.http
         with pyodide.http.open_url(dirct_url) as f:
             dirct_dat = f.getvalue()
-            dirct_df = pd.read_csv(dirct_dat)
+            dirct_df = pd.read_csv(StringIO(dirct_dat))
     else:
-        # response = urllib.request.urlopen(route_url)
-        # route_dat = response.read().decode("utf-8")
         dirct_url = "data/outputs/directions.txt"
         dirct_df = pd.read_csv(dirct_url)
     dirct_df = dirct_df.rename(columns={
