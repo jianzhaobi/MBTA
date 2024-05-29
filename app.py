@@ -81,7 +81,6 @@ app_ui = ui.page_fluid(
         '1', '57', '60', '64', '66', '88', '90'
     ], selected="Green-B"),
     ui.output_text("nowtime"),
-    ui.output_text("onclick"),
     output_widget("routemap"),
 )
 
@@ -137,22 +136,24 @@ def server(input, output, session):
         route_url = "data/outputs/routes.geojson"
         route_shp = gpd.read_file(route_url)
 
-    # # Direction
-    # dirct_url = "https://jianzhaobi.github.io/data/directions.txt"
-    # if "pyodide" in sys.modules:
-    #     import pyodide.http
-    #     with pyodide.http.open_url(dirct_url) as f:
-    #         dirct_dat = f.getvalue()
-    #         dirct_df = pd.read_csv(dirct_dat)
-    # else:
-    #     # response = urllib.request.urlopen(route_url)
-    #     # route_dat = response.read().decode("utf-8")
-    #     dirct_url = "data/outputs/directions.txt"
-    #     dirct_df = pd.read_csv(dirct_url)
-    # dirct_df = dirct_df.rename(columns={
-    #     'route_id': 'Route',
-    #     'direction_id': 'Direction',
-    # })
+    # Direction
+    dirct_url = "https://jianzhaobi.github.io/data/directions.txt"
+    if "pyodide" in sys.modules:
+        import pyodide.http
+        with pyodide.http.open_url(dirct_url) as f:
+            dirct_dat = f.getvalue()
+            dirct_df = pd.read_csv(dirct_dat)
+    else:
+        # response = urllib.request.urlopen(route_url)
+        # route_dat = response.read().decode("utf-8")
+        dirct_url = "data/outputs/directions.txt"
+        dirct_df = pd.read_csv(dirct_url)
+    dirct_df = dirct_df.rename(columns={
+        'route_id': 'Route',
+        'direction_id': 'Direction',
+        'direction': 'Bound',
+        'direction_destination': 'Destination'
+    })
 
     # Trip
     trip_url = "https://jianzhaobi.github.io/data/trip_compressed.txt"
@@ -162,8 +163,6 @@ def server(input, output, session):
             trip_dat = f.getvalue()
             trip_df = pd.read_csv(StringIO(trip_dat))
     else:
-        # response = urllib.request.urlopen(route_url)
-        # route_dat = response.read().decode("utf-8")
         trip_url = "data/outputs/trip_compressed.txt"
         trip_df = pd.read_csv(trip_url)
 
@@ -174,8 +173,9 @@ def server(input, output, session):
         mbta_lst.set(getMBTA(input.route(), route_shp))
         mbta_df, mbta_shp, mbta_h, mbta_e = mbta_lst.get()
         # Direction
-        # mbta_df = mbta_df.merge(dirct_df, on=['Route', 'Direction'])
-        mbta_df = mbta_df.merge(trip_df, on=['Trip'])
+        mbta_df = mbta_df.merge(dirct_df, on=['Route', 'Direction'], how='left')
+        mbta_df = mbta_df.merge(trip_df, on=['Trip'], how='left')
+        mbta_df.loc[mbta_df['Headsign'].isna(), 'Headsign'] = mbta_df.loc[mbta_df['Headsign'].isna(), 'Destination']
         # Clear markers
         route_map.layers = [layer for layer in route_map.layers if isinstance(layer, ipyl.TileLayer)]  # clear layers
         # Route
