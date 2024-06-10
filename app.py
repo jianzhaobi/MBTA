@@ -55,6 +55,13 @@ def getMBTA(route, route_shp):
                         else "-"
                     )
                 ],
+                "Leadcar": [
+                    (
+                        car.get("vehicle").get("multi_carriage_details")[0].get('label')
+                        if car.get("vehicle").get("multi_carriage_details") != None
+                        else "-"
+                    )
+                ],
                 "Trip": [car.get("vehicle").get("trip").get("trip_id")],
                 "Stop": [car.get("vehicle").get("stop_id")],
                 "Status": [car.get("vehicle").get("current_status")],
@@ -191,10 +198,10 @@ def server(input, output, session):
                     opacity=0.5,
                     draggable=False,
                 )
-                items = [widgets.Button(description=f"{mbta_df['ID'].iloc[i]}"),
-                         widgets.Button(description=f"Cars: {mbta_df['Carriage'].iloc[i]}"),
-                         widgets.Button(description=f"To {mbta_df['Headsign'].iloc[i]}"),
-                         widgets.Button(description=f"{mbta_df['Status'].iloc[i]}")]
+                items = [widgets.Button(description=f"{mbta_df['ID'].iloc[i]}", disabled=True),
+                         widgets.Button(description=f"Cars: {mbta_df['Carriage'].iloc[i]} ({mbta_df['Leadcar'].iloc[i]})", disabled=True),
+                         widgets.Button(description=f"To {mbta_df['Headsign'].iloc[i]}", disabled=True, layout=widgets.Layout(width='auto')),
+                         widgets.Button(description=f"{mbta_df['Status'].iloc[i]}", disabled=True, layout=widgets.Layout(width='auto'))]
                 marker.popup = widgets.VBox(items)
                 route_map.add(marker)
         reactive.invalidate_later(5)
