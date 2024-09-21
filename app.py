@@ -85,7 +85,7 @@ app_ui = ui.page_fluid(
     ui.tags.h5("By Jianzhao Bi"),
     ui.input_select(id="route", label=None, choices=[
         'Green-B', 'Green-C', 'Green-D', 'Green-E', 'Red', 'Orange', 'Blue',
-        '1', '57', '60', '64', '66', '88', '90'
+        '1', '57', '60', '64', '66', '70', '86', '88', '90'
     ], selected="Green-E"),
     ui.output_text("nowtime"),
     output_widget("routemap"),
